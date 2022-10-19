@@ -29,7 +29,7 @@ class MultipleLinearRegression():
         # fit R^2
         if r2:
             y_pred = self.predict(x[:, 1:])
-            self.fit_r2 = self.r2_score(y_true=y, y_pred=y_pred)
+            self.fit_r2, self.fit_adjr2 = self.r2_score(y_true=y, y_pred=y_pred)
     
     def predict(self, x):
         """makes predictions for all samples in x in one calculation by broadcasting the coefficients vector
@@ -55,6 +55,9 @@ class MultipleLinearRegression():
             rss = sum_{i=0}^{n} (y_i - y_hat)^2
             tss = sum_{i=0}^{n} (y_i - y_bar)^2
         """
+        n_coefs = len(self.coefficients)
+        n_samples = y_true.size(0)
+        
         y_true = self._convert_to_tensor(y_true)
         y_hat = self._convert_to_tensor(y_pred)
         y_bar = torch.mean(y_true)
@@ -66,10 +69,14 @@ class MultipleLinearRegression():
             residual_sum_squares += (y_true[i] - y_pred[i])**2
             total_sum_squares += (y_true[i] - y_bar)**2
 
-        return 1 - (residual_sum_squares / total_sum_squares)
+        r2 = 1 - (residual_sum_squares / total_sum_squares)
+        adj_r2 = 1 - (residual_sum_squares / (n_samples-n_coefs) / (total_sum_squares / n_samples - 1)
+
+        return r2, adj_r2 
 
     def summary(self):
         n_coefs = len(self.coefficients)
+        n_samples = y_true.size(0)
         if self.colnames is None:
             self.colnames = {i : f'var{i}' for i in range(n_coefs)}
 
