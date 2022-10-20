@@ -64,13 +64,13 @@ class MultipleLinearRegression():
         
         residual_sum_squares = 0
         total_sum_squares = 0
-
+        #TODO: implement without loop
         for i in range(len(y_true)):
             residual_sum_squares += (y_true[i] - y_pred[i])**2
             total_sum_squares += (y_true[i] - y_bar)**2
 
         r2 = 1 - (residual_sum_squares / total_sum_squares)
-        adj_r2 = 1 - (residual_sum_squares / (n_samples-n_coefs) / (total_sum_squares / n_samples - 1)
+        adj_r2 = 1 - (residual_sum_squares / (n_samples - n_coefs)) / (total_sum_squares / (n_samples - 1))
 
         return r2, adj_r2 
 
