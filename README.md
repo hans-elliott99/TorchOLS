@@ -1,2 +1,2 @@
 # TorchOLS
-ordinary least squares regression in pytorch ?
+ordinary least squares in pytorch ?
