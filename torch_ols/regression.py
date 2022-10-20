@@ -1,36 +1,41 @@
 import torch
-import pandas as pd
 
 ##blogpost: https://developer.ibm.com/articles/linear-regression-from-scratch/
 ##sklearn: https://github.com/scikit-learn/scikit-learn/blob/36958fb24/sklearn/linear_model/_base.py#L529
 ##stasmodels: https://www.statsmodels.org/dev/_modules/statsmodels/regression/linear_model.html#OLS
 
+
+# TODO: tests, p-values, sig. stars
 class LinearRegression():
     def __init__(self, device=torch.device("cpu")):
         self.torch_device = device
 
         self.coefficients = None
         self.intercept = None
-        self.colnames = None
+        self.xnames = None
+        self.yname = None
         self.fit_r2 = None
         self.fit_adjr2 = None
 
-    def fit(self, x, y, r2=True, colnames=None):
+    def fit(self, x, y, r2=True, xnames=None, yname=None):
         """Fit the linear model to estimate coefficients and intercept.
 
         x = a pandas dataframe, numpy.array, or torch.tensor containing desired independent variables (predictors)
-        y = a pandas dataframe, numpy.array, or torch.tensor containing one dependent variable (target)
+        y = a pandas series, numpy.array, or torch.tensor containing one dependent variable (target)
         r2 = default True. Calculate the R^2 and Adjusted R^2 of the fitted y's.
-        colnames = default None. Optionally provide variable names if not feeding in a pandas dataframe.  
+        xnames = default None. Optionally provide variable names if not feeding in a pandas dataframe.  
+        yname = default None. Optionally provide target variable name if not feeding in a pandas dataframe.  
         """
         # prepare x and y for coefficient estimates
         if "pandas" in str(type(x)):
             try:
-                self.colnames = {i:col for i,col in enumerate(x.columns)}
+                self.xnames = {i:col for i,col in enumerate(x.columns)}
+                self.yname = y.name
             except:
-                print("Warning, variable names not found. Is this a pandas series?")
-        elif colnames is not None:
-            self.colnames = colnames
+                print("Warning, variable names not found. Is x a pandas dataframe? Is y a series?")
+        elif self.xnames is not None:
+            self.xnames = xnames
+            self.yname = yname
 
         # MULTPLIE LINEAR REG   
         if x.shape[1] > 1:
@@ -50,7 +55,7 @@ class LinearRegression():
         # calculate the fit R^2
         if r2:
             y_pred = self.predict(x)
-            print(y.is_cuda, y_pred.is_cuda)
+            # print(y.is_cuda, y_pred.is_cuda) ?? not working?
             self.fit_r2, self.fit_adjr2 = self.r2_score(y_true=y, y_pred=y_pred)
     
     def predict(self, x):
@@ -98,20 +103,41 @@ class LinearRegression():
         self.intercept = self.intercept.to(self.torch_device)
 
     def summary(self):
-        """Returns a summary of model coefficients and scores."""
         n_coefs = len(self.coefficients)
-        if self.colnames is None:
-            self.colnames = {i : f'var{i}' for i in range(n_coefs)}
-
-        out = pd.DataFrame({"" : range(n_coefs+1), "coefficient" : range(n_coefs + 1)})
-        out.loc[0] = "intercept", self.intercept.item()
-        for i in range(n_coefs):
-            out.loc[i+1] = [self.colnames[i], self.coefficients[i].item()]
+        if self.xnames is None:
+            self.xnames = {i : f'X{i}' for i in range(n_coefs)}
+        if self.yname is None:
+            self.yname = "Y"
+        formula = f"'{self.yname}'" + " = Xβ + ε"
+        
+        print("_"*23*2)
+        print(f"{'Model Summary':^23}", end="| ")  
+        if self.fit_r2 is not None: print(f"{'R^2' :<10} = {self.fit_r2 :>+10.5f}")
+        print(f"{formula :^23}", end="| ")
+        if self.fit_r2 is not None: print(f"{'Adj. R^2' :<10} = {self.fit_adjr2 :>+10.5f}")
+        print("_"*23*2)
+        print(f"{'Intercept' :<10} | {self.intercept.item() :>+10.5f}", end="\n")
+        for c in range(len(self.coefficients)):
+            print(f"{self.xnames[c] :<10} | {self.coefficients[c] :>+10.5f}")
+        print("`"*23*2)
         if self.fit_r2 is not None:
-            add = pd.DataFrame({"":["--", 'R^2', 'Adj. R^2'], "coefficient" : ["score", self.fit_r2, self.fit_adjr2]})
-            out = pd.concat([out, add])
+            print(f"{'R^2' :<10} = {self.fit_r2 :>+10.5f}")
+            print(f"{'Adj. R^2' :<10} = {self.fit_adjr2 :>+10.5f}")
 
-        return out
+    # def summary(self): ##using pandas...
+    #     """Returns a summary of model coefficients and scores."""
+    #     n_coefs = len(self.coefficients)
+    #     if self.colnames is None:
+    #         self.colnames = {i : f'var{i}' for i in range(n_coefs)}
+
+    #     out = pd.DataFrame({"" : range(n_coefs+1), "coefficient" : range(n_coefs + 1)})
+    #     out.loc[0] = "intercept", self.intercept.item()
+    #     for i in range(n_coefs):
+    #         out.loc[i+1] = [self.colnames[i], self.coefficients[i].item()]
+    #     if self.fit_r2 is not None:
+    #         add = pd.DataFrame({"":["--", 'R^2', 'Adj. R^2'], "coefficient" : ["score", self.fit_r2, self.fit_adjr2]})
+    #         out = pd.concat([out, add])
+    #     return out
 
 
     def _estimate_mlr_coefs(self, x, y):
