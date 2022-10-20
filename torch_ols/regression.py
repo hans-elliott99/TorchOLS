@@ -65,30 +65,30 @@ class LinearRegression():
         return preds
     
     def r2_score(self, y_true, y_pred):
-            """Calculate R^2 and Adjusted R^2 scores given true and predicted targets.
-                r2 = 1 - (rss/tss)
-                adjusted r2 = 1 - (rss / (n - K)) / (tss / (n - 1))
-                OR, adjusted r2 = 1 - (1 - r2) * (n - 1)/(n - K)
+        """Calculate R^2 and Adjusted R^2 scores given true and predicted targets.
+            r2 = 1 - (rss/tss)
+            adjusted r2 = 1 - (rss / (n - K)) / (tss / (n - 1))
+            OR, adjusted r2 = 1 - (1 - r2) * (n - 1)/(n - K)
 
-                rss = sum_{i=0}^{n} (y_i - y_hat_i)^2
-                tss = sum_{i=0}^{n} (y_i - y_bar)^2
-                (n = sample size, K = number of predictors, y_bar = sample mean)
-            """        
-            y = self._convert_to_tensor(y_true)
-            y_hat = self._convert_to_tensor(y_pred)
-            y_bar = torch.mean(y)
-            assert y.size(0) == y_hat.size(0)
+            rss = sum_{i=0}^{n} (y_i - y_hat_i)^2
+            tss = sum_{i=0}^{n} (y_i - y_bar)^2
+            (n = sample size, K = number of predictors, y_bar = sample mean)
+        """        
+        y = self._convert_to_tensor(y_true)
+        y_hat = self._convert_to_tensor(y_pred)
+        y_bar = torch.mean(y)
+        assert y.size(0) == y_hat.size(0)
 
-            k_preds = len(self.coefficients)
-            n_samples = y.size(0)
+        k_preds = len(self.coefficients)
+        n_samples = y.size(0)
 
-            residual_sum_squares = torch.sum((y - y_hat) ** 2)
-            total_sum_squares = torch.sum((y - y_bar) ** 2)
+        residual_sum_squares = torch.sum((y - y_hat) ** 2)
+        total_sum_squares = torch.sum((y - y_bar) ** 2)
 
-            r2 = 1 - (residual_sum_squares / total_sum_squares)
-            adj_r2 = 1 - (1 - r2) * ((n_samples - 1) / (n_samples - k_preds))
+        r2 = 1 - (residual_sum_squares / total_sum_squares)
+        adj_r2 = 1 - (1 - r2) * ((n_samples - 1) / (n_samples - k_preds))
 
-            return r2.item(), adj_r2.item() 
+        return r2.item(), adj_r2.item() 
 
     def detach_cuda(self):
         """Detach model from GPU.
