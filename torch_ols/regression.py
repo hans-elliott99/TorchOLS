@@ -19,7 +19,8 @@ class LinearRegression():
 
     def fit(self, x, y, r2=True, xnames=None, yname=None):
         """Fit the linear model to estimate coefficients and intercept.
-
+        Y = X'Beta + epsilon
+        
         x = a pandas dataframe, numpy.array, or torch.tensor containing desired independent variables (predictors)
         y = a pandas series, numpy.array, or torch.tensor containing one dependent variable (target)
         r2 = default True. Calculate the R^2 and Adjusted R^2 of the fitted y's.
@@ -66,7 +67,7 @@ class LinearRegression():
         # Makes all predictions in one calculation by broadcasting the coefficients vector.
         x = self._convert_to_tensor(x).to(self.torch_device)
 
-        preds = torch.sum(x * self.coefficients, dim=1) + self.intercept
+        preds = torch.sum(x * self.coefficients, dim=1) + self.intercept ## should just do: (x.T @ self.coefficients) + self.intercept
         return preds
     
     def r2_score(self, y_true, y_pred):
